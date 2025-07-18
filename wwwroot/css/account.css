@@ -1,0 +1,322 @@
+﻿/* الأساسيات */
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4faff;
+    color: #000000;
+    font-size: 18px;
+}
+
+/* الحاوية */
+.content-container {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    height: 100vh;
+    padding-top: 180px;
+}
+
+/* النص */
+.text-box {
+    max-width: 900px;
+    animation: fadeIn 1.8s ease-in-out;
+}
+
+    .text-box h1 {
+        font-size: 3.5rem;
+        font-weight: bold;
+        margin-bottom: 24px;
+        color: #0077b6;
+        overflow: hidden;
+        white-space: nowrap;
+        width: 0;
+        animation: typing 2.5s steps(40, end) forwards;
+    }
+
+    .text-box p {
+        font-size: 1.5rem;
+        line-height: 2;
+        color: #000000;
+
+    }
+
+/* زر مخصص */
+.custom-btn {
+    background: #0077b6;
+    color: white;
+    border: 2px solid #0077b6;
+    padding: 16px 40px;
+    font-size: 1.3rem;
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 10px rgba(0, 119, 182, 0.2);
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 20px;
+}
+
+    .custom-btn:hover {
+        background: green;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px white;
+    }
+
+/* تأثير دخول */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* تأثير الكتابة */
+@keyframes typing {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+/* حاوية البطاقات */
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+/* البطاقات */
+.custom-card {
+    width: 260px;
+    background: white;
+    border: 1px solid #0077b6;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    opacity: 0;
+    animation: fadeIn 0.8s forwards, floatCard 3s ease-in-out infinite;
+}
+
+
+    .custom-card:nth-child(1) {
+        animation-delay: 0.3s;
+    }
+
+    .custom-card:nth-child(2) {
+        animation-delay: 0.6s;
+    }
+
+    .custom-card:nth-child(3) {
+        animation-delay: 0.9s;
+    }
+
+    .custom-card:nth-child(4) {
+        animation-delay: 1.2s;
+    }
+    /* أضف أكثر حسب عدد البطاقات */
+
+    .custom-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 20px rgba(0, 119, 182, 0.2);
+    }
+
+    .custom-card .card-title {
+        font-size: 1.3rem;
+        color: #0077b6;
+        font-weight: bold;
+    }
+
+    .custom-card .card-text {
+        font-size: 1rem;
+        color: #0077b6;
+        font-weight: bolder;
+    }
+
+.card-body i {
+    transition: transform 0.3s ease;
+    color: #0077b6;
+}
+
+.custom-card:hover i {
+    transform: scale(1.2);
+}
+/* ========================= */
+/* تنسيق نموذج التسجيل */
+/* ========================= */
+/* ========== القالب الرئيسي ========== */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4faff;
+    font-size: 18px;
+    height: 100%;
+}
+
+/* ===== الحاوية الرئيسية المقسومة ===== */
+.split-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ===== القسم الأيسر للصورة ===== */
+.left-side {
+    flex: 1;
+    background-color: #f4faff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+    .left-side .login-image {
+        width: 90%;
+        max-width: 600px;
+        height: auto;
+        mix-blend-mode: multiply;
+    }
+
+/* ===== القسم الأيمن للفورم ===== */
+.right-side {
+    flex: 1;
+    background-color: #0077b6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+.image-section {
+    animation: slideInRight 1.5s ease-out, floatUpDown 4s ease-in-out infinite;
+}
+/* ===== الصندوق الخاص بالفورم ===== */
+.account-box {
+    background-color: white;
+    padding: 70px 60px;
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0, 119, 182, 0.15);
+    width: 100%;
+    max-width: 600px;
+    border: 2px solid #0077b6;
+    animation: fadeIn 1.2s ease-in-out;
+}
+
+    /* ===== العنوان الرئيسي للفورم ===== */
+    .account-box h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #0077b6;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+/* ===== الحقول ===== */
+.form-label {
+    font-weight: bold;
+    color: #0077b6;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 1px solid #ced4da;
+    padding: 14px;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .form-control:focus {
+        border-color: #0077b6;
+        box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.2);
+        outline: none;
+    }
+
+/* ===== زر الدخول ===== */
+.account-box .btn {
+    background-color: #0077b6;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 100%;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+    .btn:hover {
+        background-color: green;
+        transform: translateY(-2px);
+    }
+
+/* ===== الروابط والتحقق ===== */
+.text-valid {
+    color: #dc3545;
+    font-size: 0.9rem;
+}
+
+.account-box a {
+    color: #0077b6;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+    .account-box a:hover {
+        text-decoration: underline;
+    }
+
+/* ===== تأثير الدخول ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== الاستجابة للجوال ===== */
+@media (max-width: 768px) {
+    .split-layout {
+        flex-direction: column;
+    }
+
+    .left-side, .right-side {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .account-box {
+        padding: 40px 20px;
+    }
+}
+@keyframes floatCard {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}

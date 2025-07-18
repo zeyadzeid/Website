@@ -1,0 +1,454 @@
+﻿@{
+    ViewData["Title"] = "مترجم الإشارة والصوت";
+    Layout = "~/Views/Shared/_Join.cshtml";
+}
+
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --accent-color: #4895ef;
+        --danger-color: #f72585;
+        --success-color: #4cc9f0;
+        --dark-color: #2b2d42;
+        --light-color: #f8f9fa;
+    }
+
+    body {
+        font-family: 'Tajawal', sans-serif;
+        background: #eef2f7;
+        text-align: center;
+        padding: 0;
+        margin: 0;
+        color: var(--dark-color);
+        min-height: 100vh;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #eef2f7;
+        padding: 30px;
+       
+        min-height: 100vh;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h2 {
+        color: #0077b6;
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    span {
+        color: #0077b6;
+        font-weight: 700;
+    }
+
+    .logo i {
+        color: coral;
+        font-size: 28px;
+    }
+
+    .video-container {
+        position: relative;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 1200px;
+        background-image: url('/images/8.jpg');
+        background-size: cover;
+        background-position: center;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    #video {
+        width: 100%;
+        height: 600px;
+        object-fit: cover;
+        display: none;
+        transform: scaleX(-1); /* يعكس الفيديو أفقيًا */
+    }
+
+
+    .video-placeholder {
+        width: 100%;
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        font-size: 20px;
+        flex-direction: column;
+        line-height: 1.6;
+    }
+
+    .controls {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 25px 0;
+    }
+
+    button {
+        background-color: #0077b6;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        font-size: 18px;
+        border-radius: 50px;
+        margin: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
+        min-width: 220px;
+        font-weight: 500;
+    }
+
+        button:hover {
+            background-color: coral;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button i {
+            font-size: 18px;
+        }
+
+    #startSignBtn.active {
+        background-color: var(--danger-color);
+    }
+
+    #startSpeechBtn.listening {
+        background-color: var(--success-color);
+        animation: pulse 1.5s infinite;
+    }
+
+    #cameraToggleBtn {
+        background-color:green;
+    }
+
+    #clearTextBtn {
+        background-color:red;
+    }
+
+    @@keyframes pulse {
+        0%
+
+    {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    }
+
+    textarea {
+        width: 100%;
+        height: 120px;
+        font-size: 20px;
+        margin-top: 20px;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 15px;
+        resize: none;
+        transition: border 0.3s;
+        font-family: 'Tajawal', sans-serif;
+        line-height: 1.6;
+        background-color: #f9f9f9;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        color: #0077b6;
+        font-weight:bolder;
+        text-align:center;
+           }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background-color: #fff;
+        }
+
+    .status {
+        margin-top: 20px;
+        font-size: 16px;
+        color: #555;
+        font-weight: 500;
+        padding: 10px;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+    }
+
+    .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    /* تحسينات للعرض على الشاشات الصغيرة */
+    @@media (max-width: 768px) {
+        .container
+
+    {
+        padding: 20px;
+        border-radius: 0;
+    }
+
+    .video-container, #video, .video-placeholder {
+        height: 400px;
+    }
+
+    button {
+        min-width: 100%;
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+
+    h2 {
+        font-size: 24px;
+    }
+
+    .video-placeholder {
+        font-size: 18px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    }
+</style>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-hands-helping"></i>
+            <span>UNI TALK - مترجم الإشارة والصوت</span>
+        </div>
+        <div class="video-container">
+            <video id="video" autoplay muted></video>
+            <div class="video-placeholder" id="videoPlaceholder">
+                <i class="fas fa-video-slash fa-3x mb-3"></i>
+                <p>الكاميرا غير نشطة</p>
+                <p>اضغط على زر تشغيل الكاميرا للبدء</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="cameraToggleBtn" onclick="toggleCamera()">
+                <i class="fas fa-video"></i> تشغيل الكاميرا
+            </button>
+            <button id="startSignBtn" onclick="toggleSignRecognition()" disabled>
+                <i class="fas fa-hands"></i> تحويل الإشارة إلى نص
+            </button>
+            <button id="startSpeechBtn" onclick="toggleSpeechRecognition()">
+                <i class="fas fa-microphone"></i> تحويل الصوت إلى نص
+            </button>
+            <button id="clearTextBtn" onclick="clearText()">
+                <i class="fas fa-trash-alt"></i> مسح النص
+            </button>
+        </div>
+
+        <textarea id="output"
+                  dir="rtl"
+                  style="text-align: right; font-family: 'Arial', 'Tahoma', sans-serif;"
+                  placeholder="النص المترجم سيظهر هنا...">
+        </textarea>
+
+        <div class="status" id="status">
+            جاهز للبدء، اضغط على زر تشغيل الكاميرا
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            const video = document.getElementById("video");
+            const videoPlaceholder = document.getElementById("videoPlaceholder");
+            const output = document.getElementById("output");
+            const startSignBtn = document.getElementById("startSignBtn");
+            const startSpeechBtn = document.getElementById("startSpeechBtn");
+            const cameraToggleBtn = document.getElementById("cameraToggleBtn");
+            const clearTextBtn = document.getElementById("clearTextBtn");
+            const statusElement = document.getElementById("status");
+
+            let videoStream = null;
+            let signInterval = null;
+            let isSignActive = false;
+            let isSpeechActive = false;
+            let speechRecognition = null;
+
+            // ✅ WebSocket الاتصال
+            let socket = null;
+
+            function connectWebSocket() {
+                socket = new WebSocket("ws://localhost:8765");
+
+                socket.onopen = () => {
+                    console.log("✅ WebSocket Connected");
+                    statusElement.textContent = "✅ الاتصال بالخادم ناجح (WebSocket)";
+                };
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.text) {
+                        output.value += data.text + " ";
+                        statusElement.textContent = "📥 تم التعرف على إشارة: " + data.text;
+                    }
+                };
+
+                socket.onerror = (err) => {
+                    console.error("❌ WebSocket Error", err);
+                    statusElement.textContent = "❌ حدث خطأ في الاتصال بالخادم";
+                };
+
+                socket.onclose = () => {
+                    console.warn("⚠️ تم إغلاق الاتصال بـ WebSocket");
+                    statusElement.textContent = "⚠️ تم فصل الاتصال بالخادم";
+                };
+            }
+
+            // تشغيل الكاميرا
+            async function toggleCamera() {
+                try {
+                    if (videoStream) {
+                        videoStream.getTracks().forEach(track => track.stop());
+                        videoStream = null;
+                        video.srcObject = null;
+                        video.style.display = "none";
+                        videoPlaceholder.style.display = "flex";
+                        cameraToggleBtn.innerHTML = '<i class="fas fa-video"></i> تشغيل الكاميرا';
+                        startSignBtn.disabled = true;
+                        statusElement.textContent = "تم إيقاف الكاميرا";
+
+                        if (isSignActive) toggleSignRecognition();
+                    } else {
+                        videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        video.srcObject = videoStream;
+                        video.style.display = "block";
+                        videoPlaceholder.style.display = "none";
+                        cameraToggleBtn.innerHTML = '<i class="fas fa-video-slash"></i> إيقاف الكاميرا';
+                        startSignBtn.disabled = false;
+                        statusElement.textContent = "الكاميرا نشطة، يمكنك الآن تحويل الإشارة إلى نص";
+
+                        connectWebSocket(); // الاتصال بالسيرفر بعد تشغيل الكاميرا
+                    }
+                } catch (error) {
+                    statusElement.textContent = "خطأ في تشغيل الكاميرا: " + error.message;
+                }
+            }
+
+            function toggleSignRecognition() {
+                if (!videoStream || !socket || socket.readyState !== WebSocket.OPEN) {
+                    statusElement.textContent = "يجب تشغيل الكاميرا والاتصال بـ WebSocket أولاً";
+                    return;
+                }
+
+                isSignActive = !isSignActive;
+
+                if (isSignActive) {
+                    startSignBtn.classList.add("active");
+                    startSignBtn.innerHTML = '<i class="fas fa-stop-circle"></i> إيقاف التحويل';
+                    statusElement.textContent = "🔁 جاري تحليل الإشارات...";
+                    signInterval = setInterval(sendFrameToWebSocket, 100);
+                } else {
+                    startSignBtn.classList.remove("active");
+                    startSignBtn.innerHTML = '<i class="fas fa-hands"></i> تحويل الإشارة إلى نص';
+                    clearInterval(signInterval);
+                    statusElement.textContent = "🛑 تم إيقاف تحليل الإشارات";
+                }
+            }
+
+            // إرسال صورة للـ WebSocket
+            function sendFrameToWebSocket() {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const base64Image = canvas.toDataURL("image/jpeg", 0.8); // e.g., "data:image/jpeg;base64,..."
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ frame: base64Image }));
+                }
+            }
+
+            function toggleSpeechRecognition() {
+                if (isSpeechActive) {
+                    speechRecognition.stop();
+                    isSpeechActive = false;
+                    startSpeechBtn.classList.remove("listening");
+                    startSpeechBtn.innerHTML = '<i class="fas fa-microphone"></i> تحويل الصوت إلى نص';
+                    statusElement.textContent = "توقف التعرف على الصوت";
+                } else {
+                    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                        statusElement.textContent = "المتصفح لا يدعم التعرف على الصوت";
+                        return;
+                    }
+
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    speechRecognition = new SpeechRecognition();
+                    speechRecognition.lang = "ar-SA";
+                    speechRecognition.continuous = true;
+
+                    speechRecognition.onstart = () => {
+                        isSpeechActive = true;
+                        startSpeechBtn.classList.add("listening");
+                        startSpeechBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> إيقاف التحويل';
+                        statusElement.textContent = "🎙️ جاري الاستماع...";
+                    };
+
+                    speechRecognition.onresult = (event) => {
+                        const transcript = event.results[event.results.length - 1][0].transcript;
+                        output.value += transcript + " ";
+                        statusElement.textContent = "📢 تم التعرف على الصوت: " + transcript;
+                    };
+
+                    speechRecognition.onerror = (event) => {
+                        console.error("Speech error:", event.error);
+                        statusElement.textContent = "❌ خطأ في التعرف على الصوت: " + event.error;
+                    };
+
+                    speechRecognition.onend = () => {
+                        if (isSpeechActive) speechRecognition.start();
+                    };
+
+                    speechRecognition.start();
+                }
+            }
+
+            function clearText() {
+                output.value = "";
+                statusElement.textContent = "✅ تم مسح النص";
+            }
+
+            window.addEventListener("beforeunload", () => {
+                if (videoStream) videoStream.getTracks().forEach(track => track.stop());
+                if (signInterval) clearInterval(signInterval);
+                if (speechRecognition) speechRecognition.stop();
+                if (socket) socket.close();
+            });
+        </script>
+    }
+</body>

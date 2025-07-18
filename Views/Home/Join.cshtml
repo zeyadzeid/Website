@@ -1,0 +1,532 @@
+﻿@{
+    ViewData["Title"] = "Join_Hewar";
+    Layout = "~/Views/Shared/_Join.cshtml";
+}
+
+<style>
+    #transcriptOutput {
+        min-height: 80px;
+        background: #0077b6;
+        padding: 15px;
+        border-radius: 12px;
+        font-size: 24px;
+        line-height: 1.5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-y: auto;
+        max-height: 200px;
+        color: #fff;
+    }
+
+    .transcript-line {
+        margin: 5px 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .fade-out {
+        opacity: 0;
+    }
+
+    .loading-spinner {
+        display: none;
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 4px solid #fff;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 10px auto;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .video-wrapper {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .video-wrapper video {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+        }
+
+    .video-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+    }
+
+        .video-controls button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .video-controls button:hover {
+                transform: scale(1.1);
+            }
+</style>
+
+<body>
+    <div class="call-container container mt-5">
+        <h2 class="title pulse-text mb-4">VIDEO CALL USING <span>UNI TALK</span></h2>
+
+        <div class="custom-input-group mb-4 w-75 mx-auto">
+            <div class="input-wrapper">
+                <input type="text" id="appId" class="form-control custom-input" placeholder="أدخل APP ID الخاص بك">
+                <i class="fas fa-key input-icon"></i>
+            </div>
+            <button id="confirmBtn" class="btn custom-btn confirm-btn">✔ تأكيد</button>
+            <button id="callBtn" class="btn custom-btn btn-success d-none">📞 بدء المكالمة</button>
+        </div>
+
+        <div class="video-controls-wrapper mt-3 d-none" id="videoControls">
+            <div class="video-controls">
+                <button id="audioToggleBtn" title="تفعيل/إيقاف الصوت">🔊</button>
+                <button id="videoToggleBtn" title="تفعيل/إيقاف الفيديو">📷</button>
+                <button id="screenShareBtn" title="مشاركة الشاشة">🖥</button>
+                <button id="recordBtn" title="تسجيل المكالمة">⏺</button>
+                <button id="copyLinkBtn" title="نسخ رابط الدعوة">🔗</button>
+                <button id="transcriptBtn" title="التعرف على الصوت">🎤</button>
+                <button id="signBtn" title="التعرف على لغة الإشارة">✋</button>
+            </div>
+            <div id="signLoading" class="loading-spinner"></div>
+        </div>
+
+        <div class="video-section row justify-content-center">
+            <div class="col-md-5 video-wrapper mb-4 me-md-3">
+                <h5>📹 YOU</h5>
+                <video id="localVideo" autoplay playsinline></video>
+            </div>
+            <div class="col-md-5 video-wrapper mb-4">
+                <h5>👥 YOUR FRIEND</h5>
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h5 style="color:#0077b6;font-weight:bolder;">💬 Live Transcript</h5>
+                <div id="transcriptOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js" defer></script>
+    <script defer>
+        document.addEventListener("DOMContentLoaded", () => {
+            // المتغيرات العامة
+            let APP_ID = "";
+            const CHANNEL_NAME = "testChannel";
+            const TOKEN = null;
+            let client, screenTrack, mediaRecorder;
+            let localTracks = { videoTrack: null, audioTrack: null };
+            let remoteUsers = {};
+            let recordedChunks = [];
+            let audioEnabled = true, videoEnabled = true;
+            let transcriptEnabled = false;
+            let localRecognition;
+            let ws, signWs;
+            let sendingFrames = false;
+            let videoCaptureInterval;
+            let signVideoStream;
+
+            // اختصار document.getElementById
+            const $ = id => document.getElementById(id);
+
+            // دالة لإضافة النص إلى واجهة النتائج
+            function addTranscriptToUI(text) {
+                const p = document.createElement("p");
+                p.className = "transcript-line";
+                p.textContent = text;
+                $("transcriptOutput").appendChild(p);
+
+                setTimeout(() => {
+                    p.classList.add("fade-out");
+                    setTimeout(() => p.remove(), 500);
+                }, 4000);
+            }
+
+            // إعداد اتصال WebSocket للترجمة النصية
+            function setupWebSocket() {
+                ws = new WebSocket("ws://localhost:9001");
+                ws.onopen = () => console.log("✅ Connected to Transcript WS server");
+                ws.onclose = () => console.log("❌ Disconnected from Transcript WS server");
+                ws.onerror = (error) => console.error("Transcript WS error:", error);
+
+                ws.onmessage = (event) => {
+                    addTranscriptToUI(event.data);
+                };
+            }
+
+            // بدء المكالمة
+            async function startCall() {
+                if (!APP_ID) {
+                    alert("⚠ يرجى إدخال App ID أولاً.");
+                    return;
+                }
+
+                $("videoControls").classList.remove("d-none");
+
+                try {
+                    // إنشاء عميل Agora والانضمام إلى القناة
+                    client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+                    await client.join(APP_ID, CHANNEL_NAME, TOKEN, null);
+
+                    // إنشاء وتشغيل مسارات الصوت والفيديو
+                    [localTracks.audioTrack, localTracks.videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                    localTracks.videoTrack.play("localVideo");
+                    await client.publish(Object.values(localTracks));
+
+                    // معالجة انضمام المستخدمين الآخرين
+                    client.on("user-published", async (user, mediaType) => {
+                        await client.subscribe(user, mediaType);
+                        if (mediaType === "video") {
+                            user.videoTrack.play("remoteVideo");
+                        }
+                        if (mediaType === "audio") {
+                            user.audioTrack.play();
+                        }
+                        remoteUsers[user.uid] = user;
+                    });
+
+                    // إعداد WebSocket للترجمة
+                    setupWebSocket();
+                } catch (error) {
+                    console.error("Error starting call:", error);
+                    alert("❌ فشل بدء المكالمة: " + error.message);
+                }
+            }
+
+            // إنهاء المكالمة
+            function leaveCall() {
+                $("videoControls").classList.add("d-none");
+
+                // إيقاف جميع المسارات
+                Object.values(localTracks).forEach(track => {
+                    if (track) {
+                        track.stop();
+                        track.close();
+                    }
+                });
+
+                // إيقاف مشاركة الشاشة إذا كانت نشطة
+                if (screenTrack) {
+                    screenTrack.stop();
+                    screenTrack = null;
+                }
+
+                // مغادرة القناة
+                if (client) {
+                    client.leave();
+                }
+
+                // إعادة تعيين واجهة الفيديو
+                $("localVideo").style.backgroundImage = "url('/images/local-placeholder.jpg')";
+                $("remoteVideo").style.backgroundImage = "url('/images/remote-placeholder.jpg')";
+
+                // إيقاف التعرف على الصوت إذا كان نشطًا
+                if (transcriptEnabled) {
+                    localRecognition?.stop();
+                    $("transcriptBtn").innerText = "🎤";
+                    transcriptEnabled = false;
+                }
+
+                // إيقاف التعرف على لغة الإشارة إذا كان نشطًا
+                if (sendingFrames) {
+                    stopSignLanguageRecognition();
+                }
+            }
+
+            // التعرف على لغة الإشارة
+            function startSignLanguageRecognition() {
+                $("signLoading").style.display = "block";
+                $("signBtn").disabled = true;
+
+                signWs = new WebSocket("ws://localhost:8765");
+                const signVideo = document.createElement("video");
+                signVideo.setAttribute("autoplay", true);
+                signVideo.setAttribute("muted", true);
+                signVideo.setAttribute("playsinline", true);
+                signVideo.style.display = "none";
+                document.body.appendChild(signVideo);
+
+                signWs.onopen = () => {
+                    console.log("✅ Connected to Sign Language WS server");
+                    $("signLoading").style.display = "none";
+                    $("signBtn").disabled = false;
+                    $("signBtn").innerText = "✋ (جارٍ التشغيل)";
+
+                    navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                            frameRate: { ideal: 15 },
+                            facingMode: "user"
+                        }
+                    }).then(stream => {
+                        signVideoStream = stream;
+                        signVideo.srcObject = stream;
+
+                        signVideo.play().then(() => {
+                            sendingFrames = true;
+                            const canvas = document.createElement("canvas");
+                            const ctx = canvas.getContext("2d");
+                            canvas.width = 640;
+                            canvas.height = 480;
+
+                            videoCaptureInterval = setInterval(() => {
+                                if (!sendingFrames || signVideo.readyState !== 4) return;
+
+                                try {
+                                    // رسم الإطار على canvas
+                                    ctx.drawImage(signVideo, 0, 0, canvas.width, canvas.height);
+
+                                    // تحويل إلى JPEG وإرساله
+                                    canvas.toBlob(blob => {
+                                        if (signWs.readyState === WebSocket.OPEN && blob) {
+                                            const reader = new FileReader();
+                                            reader.onload = () => {
+                                                signWs.send(reader.result);
+                                            };
+                                            reader.readAsArrayBuffer(blob);
+                                        }
+                                    }, 'image/jpeg', 0.8);
+                                } catch (e) {
+                                    console.error("Error processing frame:", e);
+                                }
+                            }, 200); // 5 إطارات في الثانية
+                        });
+                    }).catch(err => {
+                        console.error("Camera access error:", err);
+                        alert("❌ فشل الوصول إلى الكاميرا: " + err.message);
+                        stopSignLanguageRecognition();
+                    });
+                };
+
+                signWs.onmessage = (event) => {
+                    try {
+                        const result = JSON.parse(event.data);
+                        if (result.text) {
+                            console.log("Sign language result:", result.text);
+                            addTranscriptToUI(result.text);
+
+                            // إرسال النتيجة إلى سيرفر الترجمه النصية إذا كان متصلاً
+                            if (ws?.readyState === WebSocket.OPEN) {
+                                ws.send(result.text);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error parsing result:", e);
+                    }
+                };
+
+                signWs.onerror = (error) => {
+                    console.error("Sign WS error:", error);
+                    alert("⚠️ تعذر الاتصال بخدمة التعرف على لغة الإشارة");
+                    stopSignLanguageRecognition();
+                };
+
+                signWs.onclose = () => {
+                    console.log("Sign WS connection closed");
+                    stopSignLanguageRecognition();
+                };
+            }
+
+            // إيقاف التعرف على لغة الإشارة
+            function stopSignLanguageRecognition() {
+                sendingFrames = false;
+                clearInterval(videoCaptureInterval);
+
+                if (signVideoStream) {
+                    signVideoStream.getTracks().forEach(track => track.stop());
+                    signVideoStream = null;
+                }
+
+                if (signWs && signWs.readyState === WebSocket.OPEN) {
+                    signWs.close();
+                }
+
+                $("signLoading").style.display = "none";
+                $("signBtn").innerText = "✋";
+                $("signBtn").disabled = false;
+
+                // إزالة عناصر الفيديو المخفية
+                const hiddenVideos = document.querySelectorAll('video[style="display: none;"]');
+                hiddenVideos.forEach(video => video.remove());
+            }
+
+            // التعرف على الكلام
+            function startSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    alert("🚫 المتصفح لا يدعم التعرف على الصوت، يرجى استخدام Chrome أو Edge");
+                    return;
+                }
+
+                localRecognition = new SpeechRecognition();
+                localRecognition.lang = 'ar-EG';
+                localRecognition.continuous = true;
+                localRecognition.interimResults = true;
+                localRecognition.maxAlternatives = 1;
+
+                localRecognition.onresult = (event) => {
+                    const result = event.results[event.resultIndex];
+                    const transcript = result[0].transcript.trim();
+                    if (!transcript) return;
+
+                    if (result.isFinal) {
+                        addTranscriptToUI(transcript);
+
+                        if (ws?.readyState === WebSocket.OPEN) {
+                            ws.send(transcript);
+                        }
+                    }
+                };
+
+                localRecognition.onerror = (e) => {
+                    console.error("Speech recognition error:", e);
+                    if (e.error === 'not-allowed') {
+                        alert("⚠️ يرجى السماح باستخدام الميكروفون");
+                    }
+                };
+
+                localRecognition.onend = () => {
+                    if (transcriptEnabled) {
+                        localRecognition.start();
+                    }
+                };
+
+                localRecognition.start();
+            }
+
+            // معالجات أحداث الأزرار
+            $("confirmBtn").onclick = () => {
+                APP_ID = $("appId").value.trim();
+                if (APP_ID) {
+                    $("callBtn").classList.remove("d-none");
+                    $("confirmBtn").classList.add("d-none");
+                } else {
+                    alert("❌ يرجى إدخال App ID صالح.");
+                }
+            };
+
+            $("callBtn").onclick = async () => {
+                if ($("callBtn").innerText.includes("📞")) {
+                    await startCall();
+                    $("callBtn").innerHTML = "❌ إنهاء المكالمة";
+                    $("callBtn").classList.replace("btn-success", "btn-danger");
+                } else {
+                    leaveCall();
+                    $("callBtn").innerHTML = "📞 بدء المكالمة";
+                    $("callBtn").classList.replace("btn-danger", "btn-success");
+                }
+            };
+
+            $("audioToggleBtn").onclick = () => {
+                audioEnabled = !audioEnabled;
+                localTracks.audioTrack?.setEnabled(audioEnabled);
+                $("audioToggleBtn").innerHTML = audioEnabled ? "🔊" : "🔇";
+            };
+
+            $("videoToggleBtn").onclick = () => {
+                videoEnabled = !videoEnabled;
+                localTracks.videoTrack?.setEnabled(videoEnabled);
+                $("videoToggleBtn").innerHTML = videoEnabled ? "📷" : "❌📷";
+            };
+
+            $("screenShareBtn").onclick = async () => {
+                if (!screenTrack) {
+                    try {
+                        screenTrack = await AgoraRTC.createScreenVideoTrack();
+                        await client.unpublish(localTracks.videoTrack);
+                        await client.publish(screenTrack);
+                        $("screenShareBtn").innerHTML = "🖥 (جارٍ)";
+                    } catch (error) {
+                        console.error("Screen sharing failed:", error);
+                        alert("❌ فشل مشاركة الشاشة. يرجى التحقق من الأذونات.");
+                    }
+                } else {
+                    await client.unpublish(screenTrack);
+                    await client.publish(localTracks.videoTrack);
+                    screenTrack.stop();
+                    screenTrack = null;
+                    $("screenShareBtn").innerHTML = "🖥";
+                }
+            };
+
+            $("recordBtn").onclick = () => {
+                if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                    const stream = $("localVideo").captureStream();
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedChunks = [];
+
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) {
+                            recordedChunks.push(e.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: "video/webm" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `recording_${new Date().toISOString().replace(/[:.]/g, "-")}.mp4`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    };
+
+                    mediaRecorder.start(1000); // جمع البيانات كل ثانية
+                    $("recordBtn").innerHTML = "⏺ (جارٍ)";
+                } else {
+                    mediaRecorder.stop();
+                    $("recordBtn").innerHTML = "⏺";
+                }
+            };
+
+            $("copyLinkBtn").onclick = () => {
+                navigator.clipboard.writeText(`${location.origin}/Join_Hewar`)
+                    .then(() => alert("✅ تم نسخ رابط الاجتماع إلى الحافظة."))
+                    .catch(() => alert("❌ فشل نسخ الرابط. يرجى المحاولة مرة أخرى."));
+            };
+
+            $("transcriptBtn").onclick = () => {
+                transcriptEnabled = !transcriptEnabled;
+                if (transcriptEnabled) {
+                    startSpeechRecognition();
+                    $("transcriptBtn").innerText = "🎤 (جارٍ)";
+                } else {
+                    localRecognition?.stop();
+                    $("transcriptBtn").innerText = "🎤";
+                }
+            };
+
+            $("signBtn").onclick = () => {
+                if (!sendingFrames) {
+                    startSignLanguageRecognition();
+                } else {
+                    stopSignLanguageRecognition();
+                }
+            };
+
+            // التنظيف عند مغادرة الصفحة
+            window.addEventListener('beforeunload', () => {
+                leaveCall();
+            });
+        });
+    </script>
+</body>

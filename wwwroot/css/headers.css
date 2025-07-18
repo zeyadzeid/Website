@@ -1,0 +1,78 @@
+﻿.main-header {
+    background-color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px 0;
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+}
+
+    .main-header .container-fluid {
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+/* المستخدم */
+.user-auth {
+    color: #0077b6;
+    font-size: 1.3rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.4rem 1rem;
+    border-radius: 15px;
+    transition: background 0.3s ease;
+}
+
+    .user-auth:hover {
+        background: #0077b6;
+        color:white;
+        cursor: pointer;
+    }
+
+/* روابط الأيقونات */
+.nav-icons .icon-link {
+    font-size: 2.2rem;
+    color: #0077b6;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .nav-icons .icon-link:hover {
+        background-color: #0077b6;
+        color: #ffffff;
+        transform: scale(1.2);
+        box-shadow: 0 4px 15px rgba(0, 119, 182, 0.5);
+    }
+
+
+/* أيقونة اللوج أوت بلون مميز */
+.nav-icons .logout:hover {
+    color: #ff4d4d;
+}
+
+/* استجابة للشاشات الصغيرة */
+@media (max-width: 576px) {
+    .main-header .container-fluid {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .user-auth, .nav-icons {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .nav-icons {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}

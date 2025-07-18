@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "StartPage";
+    Layout = "~/Views/Shared/_AccountLayout.cshtml";
+}
+
+<div class="container content-container">
+    <div class="text-box fade-in">
+        <h1>UNI TALK !👐</h1>
+        <p class="lead mt-3">
+            Empowering communication for the deaf and mute through smart technology.
+            Join inclusive meetings with speech-to-sign and sign-to-speech translation.
+        </p>
+
+        <!-- البطاقات -->
+        <div class="d-flex justify-content-center gap-4 mt-4 flex-wrap cards-container">
+            <div class="card custom-card">
+                <div class="card-body">
+                    <i class="fas fa-video fa-3x mb-3 text-success"></i>
+                    <h5 class="card-title fw-bold text-success">Inclusive Conferences</h5>
+                    <p class="card-text"> everyone can speak</p>
+                    <a asp-controller="Account" asp-action="Login" class="stretched-link"></a>
+
+                </div>
+            </div>
+
+            <div class="card custom-card">
+                <div class="card-body">
+                    <i class="fas fa-user-plus fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title fw-bold text-primary">Inclusive <br/>Meeting</h5>
+                    <p class="card-text">Join a new meeting easily</p>
+                    <a asp-controller="Account" asp-action="Login" class="stretched-link"></a>
+
+                </div>
+            </div>
+            <div class="card custom-card">
+                <div class="card-body">
+                    <i class="fas fa-book fa-3x mb-3 text-warning"></i>
+                    <h5 class="card-title fw-bold text-warning">LEARN <br />with us</h5>
+                    <p class="card-text">Learn how to start</p>
+                    <a asp-controller="Account" asp-action="Login" class="stretched-link"></a>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- زر البدء -->
+        <div class="mt-4">
+            <a asp-controller="Account" asp-action="Login" class="btn custom-btn">
+                Get Started
+            </a>
+        </div>
+    </div>
+</div>
